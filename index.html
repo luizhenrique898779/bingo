@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Início - Bingo Online</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 50px; }
+    input, button { font-size: 18px; padding: 10px; margin: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🎲 Bingo Online</h1>
+  <p>Digite um código ou gere um novo para entrar em uma sala:</p>
+
+  <input id="codigoSala" placeholder="Código da Sala" maxlength="10" />
+  <br>
+  <button onclick="entrar()">Entrar na Sala</button>
+  <button onclick="gerar()">Gerar Código Aleatório</button>
+
+  <script>
+    function entrar() {
+      const cod = document.getElementById('codigoSala').value.trim().toUpperCase();
+      if (!cod) return alert('Digite um código válido!');
+      location.href = `sala.html?codigo=${cod}`;
+    }
+
+    function gerar() {
+      const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let codigo = '';
+      for (let i = 0; i < 6; i++) {
+        codigo += letras.charAt(Math.floor(Math.random() * letras.length));
+      }
+      document.getElementById('codigoSala').value = codigo;
+    }
+  </script>
+</body>
+</html>

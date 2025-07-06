@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Sala de Bingo</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f0f0f0; padding: 20px; }
+    button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+    table { margin: 10px; display: inline-block; border-collapse: collapse; }
+    td { border: 1px solid #555; padding: 10px; width: 30px; height: 30px; text-align: center; }
+    .marcado { background-color: #ccc; }
+    .vencedora { background-color: lightgreen; }
+  </style>
+</head>
+<body>
+  <h1>Bingo - Sala</h1>
+  <p id="salaInfo"></p>
+
+  <button onclick="sortearPedra()">🎲 Sortear Pedra</button>
+  <button onclick="criarCartela()">🧾 Nova Cartela</button>
+  <button onclick="imprimirCartelas()">🖨️ Imprimir Cartelas</button>
+  <button onclick="resetarSala()">🧹 Resetar Sala</button>
+  <br><br>
+  <a href="index.html"><button>🏠 Voltar para Início</button></a>
+
+  <h2>Pedras Sorteadas</h2>
+  <div id="pedrasSorteadas"></div>
+
+  <h2>Cartelas</h2>
+  <div id="areaCartelas"></div>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    const sala = params.get('codigo') || 'DEFAULT';
+
+    document.getElementById('salaInfo').innerText = 'Sala: ' + sala;
+
+    const keyPedras = 'pedras_' + sala;
+    const keyCartelas = 'cartelas_' + sala;
+
+    let pedras = JSON.parse(localStorage.getItem(keyPedras)) || [];
+    let cartelas = JSON.parse(localStorage.getItem(keyCartelas)) || [];
+
+    function salvar() {
+      localStorage.setItem(keyPedras, JSON.stringify(pedras));
+      localStorage.setItem(keyCartelas, JSON.stringify(cartelas));
+    }
+
+    function sortearPedra() {
+      if (pedras.length >= 75) {
+        alert("Todas as pedras foram sorteadas!");
+        location.reload();
+        return;
+      }
+
+      let n;
+      do {
+        n = Math.floor(Math.random() * 75) + 1;
+      } while (pedras.includes(n));
+
+      pedras.push(n);
+      salvar();
+      atualizarTela();
+    }
+
+    function criarCartela() {
+      const numeros = [];
+      while (numeros.length < 25) {
+        const n = Math.floor(Math.random() * 75) + 1;
+        if (!numeros.includes(n)) numeros.push(n);
+      }
+      cartelas.push({ numeros, vencedora: false });
+      salvar();
+      atualizarTela();
+    }
+
+    function checarVencedora(nums) {
+      for (let i = 0; i < 5; i++) {
+        const linha = nums.slice(i*5, i*5+5);
+        const coluna = [0,1,2,3,4].map(j => nums[i + j*5]);
+        if (linha.every(v => pedras.includes(v)) || coluna.every(v => pedras.includes(v))) return true;
+      }
+      const diag1 = [0,6,12,18,24].map(i => nums[i]);
+      const diag2 = [4,8,12,16,20].map(i => nums[i]);
+      return diag1.every(v => pedras.includes(v)) || diag2.every(v => pedras.includes(v));
+    }
+
+    function atualizarTela() {
+      document.getElementById('pedrasSorteadas').innerText = pedras.join(', ');
+
+      const area = document.getElementById('areaCartelas');
+      area.innerHTML = '';
+
+      cartelas.forEach((cartela, idx) => {
+        if (!cartela.vencedora && checarVencedora(cartela.numeros)) {
+          cartela.vencedora = true;
+          salvar();
+        }
+
+        const tabela = document.createElement('table');
+        if (cartela.vencedora) tabela.classList.add('vencedora');
+
+        for (let r = 0; r < 5; r++) {
+          const tr = document.createElement('tr');
+          for (let c = 0; c < 5; c++) {
+            const val = cartela.numeros[r * 5 + c];
+            const td = document.createElement('td');
+            td.innerText = val;
+            if (pedras.includes(val)) td.classList.add('marcado');
+            tr.appendChild(td);
+          }
+          tabela.appendChild(tr);
+        }
+        area.appendChild(tabela);
+      });
+
+      if (pedras.length >= 75) {
+        setTimeout(() => location.reload(), 2000);
+      }
+    }
+
+    function imprimirCartelas() {
+      window.print();
+    }
+
+    function resetarSala() {
+      if (confirm("Deseja realmente apagar todos os dados desta sala?")) {
+        localStorage.removeItem(keyPedras);
+        localStorage.removeItem(keyCartelas);
+        pedras = [];
+        cartelas = [];
+        atualizarTela();
+      }
+    }
+
+    atualizarTela();
+  </script>
+</body>
+</html>
